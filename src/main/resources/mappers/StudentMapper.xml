@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.etoak.mapper.StudentMapper">
+
+    <!--连表查询 column要用别名 一定注意!!-->
+    <resultMap id="rMap_stu" type="com.etoak.pojo.Student">
+        <id property="id" column="sid"></id>
+        <result property="name" column="sname"></result>
+        <result property="age" column="age"></result>
+        <result property="email" column="email"></result>
+        <result property="sex" column="sex"></result>
+        <result property="schid" column="schid"></result>
+        <association property="sch" javaType="com.etoak.pojo.School">
+            <id property="id" column="schid"></id>
+            <result property="name" column="schname"></result>
+            <result property="city" column="city"></result>
+        </association>
+        <association property="pic" javaType="com.etoak.pojo.Pic">
+            <id property="id" column="pid"></id>
+            <result property="savepath" column="savepath"></result>
+            <result property="uploadtime" column="uploadtime"></result>
+            <result property="realname" column="realname"></result>
+        </association>
+    </resultMap>
+
+    <select id="queryAllStus" resultMap="rMap_stu">
+        select s.id sid,s.name sname,age,email,sex,
+               sch.id schid,sch.schname schname,sch.city city,
+               p.id pid,savepath,uploadtime,realname
+               from tbl_student s
+               left join tbl_school sch on s.schid = sch.id
+               left join tbl_pic p on p.stuid = s.id
+      <where>
+          <if test=" name != null and name != ''">
+              and s.name like '%${name}%'
+          </if>
+          <if test="sex != null and name != ''">
+              and s.sex like '%${sex}%'
+          </if>
+          <if test="schid != null and schid != ''">
+              and s.schid like #{schid}
+          </if>
+      </where>
+    </select>
+
+    <select id="queryStuById" resultType="com.etoak.pojo.Student">
+        select * from tbl_student where id = #{id}
+    </select>
+
+    <delete id="deleteById">
+        delete tbl_student,tbl_pic from tbl_student
+               left join tbl_pic on tbl_student.id = tbl_pic.stuid
+               where tbl_student.id=#{id}
+    </delete>
+
+    <insert id="addStu" keyColumn="id" useGeneratedKeys="true" keyProperty="id">
+        insert into tbl_student(name,age,email,sex,schid) values
+            (#{name},#{age},#{email},#{sex},#{schid})
+    </insert>
+    
+    <insert id="addPic">
+        insert into tbl_pic(savepath,realname,uploadtime,stuid) values
+        (#{savepath},#{realname},#{uploadtime},#{stuid})
+    </insert>
+
+    <update id="updateStu">
+        update tbl_student set
+          name = #{name},age = #{age},email = #{email},sex = #{sex},schid=#{schid}
+          where  id = #{id}
+    </update>
+
+    <resultMap id="rMap_sch" type="com.etoak.pojo.School">
+        <result property="name" column="schname"></result>
+    </resultMap>
+
+    <select id="queryAllSchs" resultMap="rMap_sch">
+        select * from tbl_school
+    </select>
+    <!--用于导出Exel-->
+    <resultMap id="rMap_stuvo" type="com.etoak.vo.ExelStu">
+        <id property="序号" column="sid"></id>
+        <result property="学生姓名" column="sname"></result>
+        <result property="学生年龄" column="age"></result>
+        <result property="学生邮箱" column="email"></result>
+        <result property="学生性别" column="sex"></result>
+        <result property="学校名称" column="schname"></result>
+        <result property="所属城市" column="city"></result>
+    </resultMap>
+    <select id="queryAll" resultMap="rMap_stuvo">
+        select s.id sid,s.name sname,s.age,s.email,s.sex,
+             sch.schname ,sch.city
+             from tbl_student s
+             left join tbl_school sch on s.schid = sch.id
+    </select>
+
+    <select id="queryPicById" resultType="String">
+        select savepath from tbl_pic where stuid=#{stuid}
+    </select>
+
+
+</mapper>
